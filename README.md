@@ -3,8 +3,8 @@ Parses public API of Polish administrative units' area and returns in the object
 
 Example:
 ```
->>> from main import get_country_units
->>> units = get_country_units()
+>>> from polish_administrative_units import Country
+>>> units = Country()
 >>> units.find_subunit("14 65 01 1").get_name()
 'm. St. Warszawa'
 ```

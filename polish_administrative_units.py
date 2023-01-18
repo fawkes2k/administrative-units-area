@@ -53,6 +53,36 @@ class Province(__DivisiableUnit): subordinate_unit = County
 # "Kraj" in Polish
 class Country(__DivisiableUnit):
     subordinate_unit = Province
-    def __init__(self, name: str, area: float): super().__init__(name, '', area)
+
+    def __init__(self):
+        """
+        Parses public API in CSV format and returns data in the object format
+        :return: Country object with subunits parsed from the API
+        """
+        from json import loads
+        from csv import reader
+        json = loads(self.__get_content_from_url('https://api.dane.gov.pl/1.4/datasets/1447/resources'))
+        link = json['data'][-1]['attributes']['csv_file_url']
+        csv_content = self.__get_content_from_url(link)
+        records = list(reader(csv_content.split('\n')))[1:-1]
+        for record in records:
+            unit_teryt, name_of_unit, area_of_unit = record
+            teryt_parts = unit_teryt.split(' ')
+            if unit_teryt == '00': super().__init__(name_of_unit, '', int(area_of_unit))
+            elif len(teryt_parts) == 1:
+                province = Province(name_of_unit, unit_teryt, int(area_of_unit))
+                self.add_subunit(province)
+            elif len(teryt_parts) == 2:
+                county = County(name_of_unit, unit_teryt, int(area_of_unit))
+                province.add_subunit(county)
+            else:
+                municipality = Municipality(name_of_unit, unit_teryt, int(area_of_unit))
+                county.add_subunit(municipality)
+
+    def __get_content_from_url(self, url: str) -> str:
+        from requests import get
+        _ = self
+        content = get(url).content.decode()
+        return content
 
 class WrongSubunitException(RuntimeError): pass
